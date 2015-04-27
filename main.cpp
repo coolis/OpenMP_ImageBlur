@@ -130,7 +130,8 @@ public:
         for (int i=0; i<s.pixels.size(); i++) {
             vector<float> row;
             for (int j=0; j<s.pixels[i].size(); j++) {
-                int v = -4+(float)(8*s.pixels[i][j].value)/maxValue; 
+                //int v = -4+(float)(8*s.pixels[i][j].value)/maxValue; 
+                float v = (float)s.pixels[i][j].value/maxValue;
                 row.push_back(v);
             }
             kernel.push_back(row);
@@ -139,24 +140,19 @@ public:
     void process(Image<RGB> &img, Image<RGB> &outImage, int start, int end) {
         for (int imgRow = start; imgRow < end; imgRow++) {
             for (int imgCol = 0; imgCol < img.pixels[imgRow].size(); imgCol++) {
-                RGB newPixel(0, 0, 0);
-                int counter = 0;
+                float r=0, g=0, b=0;
                 for (int kernelRow = 0; kernelRow < kernel.size(); kernelRow++) {
                     for (int kernelCol = 0; kernelCol < kernel[kernelRow].size(); kernelCol++) {
                         int y = imgRow - (kernel.size()/2 - kernelRow);
                         int x = imgCol - (kernel[kernelRow].size()/2  - kernelCol);
                         if ( x >= 0 && x < img.pixels[imgRow].size() && y >= 0 && y < img.pixels.size()) {
-                            newPixel.r += img.pixels[y][x].r * kernel[kernelRow][kernelCol];
-                            newPixel.g += img.pixels[y][x].g * kernel[kernelRow][kernelCol];
-                            newPixel.b += img.pixels[y][x].b * kernel[kernelRow][kernelCol];
-                            counter++;
+                            r += img.pixels[y][x].r * kernel[kernelRow][kernelCol];
+                            g += img.pixels[y][x].g * kernel[kernelRow][kernelCol];
+                            b += img.pixels[y][x].b * kernel[kernelRow][kernelCol];
                         }
                     }
                 }
-                int maxValue = counter * 4;
-                newPixel.r /= maxValue;
-                newPixel.g /= maxValue;
-                newPixel.b /= maxValue;
+                RGB newPixel((int)r, (int)g, (int)b);
                 outImage.pixels[imgRow][imgCol] = newPixel;
             }
         }
