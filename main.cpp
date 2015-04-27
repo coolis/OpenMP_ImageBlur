@@ -3,6 +3,7 @@
 #include<string>
 #include<vector>
 #include<sstream>
+#include<omp.h>
 
 using namespace std;
 
@@ -43,9 +44,9 @@ public:
         int h = stoi(height);
         
         Image<RGB> img(width, height, max_value, type);
-        for (int i=0; i<w; i++) {
+        for (int i=0; i<h; i++) {
             vector<RGB> row;
-            for (int j=0; j<h; j++) {
+            for (int j=0; j<w; j++) {
                 string r,g,b;
                 if (inFile >> r >> g >> b) {
                     RGB pixel(stoi(r), stoi(g), stoi(b));
@@ -69,9 +70,9 @@ public:
         int h = stoi(height);
         
         Image<Grey> img(width, height, max_value, type);
-        for (int i=0; i<w; i++) {
+        for (int i=0; i<h; i++) {
             vector<Grey> row;
-            for (int j=0; j<h; j++) {
+            for (int j=0; j<w; j++) {
                 string v;
                 if (inFile >> v) {
                     Grey pixel(stoi(v));
@@ -137,8 +138,9 @@ public:
             kernel.push_back(row);
         }
     };
-    void process(Image<RGB> &img, Image<RGB> &outImage, int start, int end) {
-        for (int imgRow = start; imgRow < end; imgRow++) {
+    void process(Image<RGB> &img, Image<RGB> &outImage) {
+        #pragma omp parallel for num_threads(4)
+        for (int imgRow = 0; imgRow < img.pixels.size(); imgRow++) {
             for (int imgCol = 0; imgCol < img.pixels[imgRow].size(); imgCol++) {
                 float r=0, g=0, b=0;
                 for (int kernelRow = 0; kernelRow < kernel.size(); kernelRow++) {
@@ -197,13 +199,7 @@ int main(int argc, char *argv[]) {
     Image<RGB> outImage = myImage;
     ImageProcessor imgP(stencil);
     for (int i=0; i<counter; i++) {
-        int range = stoi(myImage.height)/n;
-        #pragma omp parallel num_threads(n)
-        {
-            #pragma omp for
-            for (int i=0; i<n; i++)
-                imgP.process(myImage, outImage, i*range, (i+1)*range);
-        }
+        imgP.process(myImage, outImage);
         myImage = outImage;
     }
 
